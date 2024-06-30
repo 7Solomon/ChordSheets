@@ -52,7 +52,9 @@ class _SongSheetPageState extends State<SongSheetPage> {
                     String verseTitle = verses[verseIndex];
                     List<dynamic> verseData = widget.data['data'][verseTitle];
                     return VerseWidget(
-                        verseTitle: verseTitle, verseData: verseData);
+                      verseTitle: verseTitle,
+                      verseData: verseData,
+                    );
                   } else {
                     return Container();
                   }
@@ -87,13 +89,11 @@ class VerseWidget extends StatelessWidget {
           children: [
             Text(
               verseTitle,
-              style:
-                  const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
             ),
             ...verseData.map((item) {
               if (item is Map<String, dynamic>) {
-                List<List<dynamic>> chords =
-                    List<List<dynamic>>.from(item['chords']);
+                List<List<dynamic>> chords = List<List<dynamic>>.from(item['chords']);
                 String lyrics = item['lyrics'];
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -110,75 +110,44 @@ class VerseWidget extends StatelessWidget {
   }
 
   Widget _buildChordLyricPair(List<List<dynamic>> chords, String lyrics) {
-    List<Widget> chordWidgets = [];
-    int chordIndex = 0;
-    int chordPos = (chordIndex < chords.length) ? chords[chordIndex][1] : -1;
-    print(chordPos);
-    StringBuffer currentLyrics = StringBuffer();
+    // Split lyrics into individual characters
+    List<String> lyricsChars = lyrics.split('');
 
-    for (int i = 0; i < lyrics.length; i++) {
-      if (i == chordPos) {
-        // Create a widget for the chord
-        chordWidgets.add(
-          Text(
-            chords[chordIndex][0],
-            style: TextStyle(color: Colors.blue),
+    // List to hold text spans with chords and lyrics
+    List<InlineSpan> textSpans = [];
+
+    int chordIndex = 0;
+    for (int i = 0; i < lyricsChars.length; i++) {
+      // Check if the current position has a chord
+      if (chordIndex < chords.length && chords[chordIndex][1] == i) {
+        textSpans.add(
+          WidgetSpan(
+            child: Column(
+              children: [
+                Text(
+                  chords[chordIndex][0],
+                  style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                ),
+                Text(lyricsChars[i]),
+              ],
+            ),
           ),
         );
         chordIndex++;
-        if (chordIndex < chords.length) {
-          chordPos = chords[chordIndex][1];
-        } else {
-          chordPos = -1;
-        }
-        //currentLyrics.write(' '); // Add space for the chord
       } else {
-        chordWidgets.add(
-          const Text(
-            " ",
-            style: TextStyle(color: Colors.blue),
+        textSpans.add(
+          TextSpan(
+            text: lyricsChars[i],
           ),
         );
       }
-      currentLyrics.write(lyrics[i]);
     }
 
-    // Add remaining chords if any
-    //while (chordIndex < chords.length) {
-    //  chordWidgets.add(
-    //    Text(
-    //      chords[chordIndex][0],
-    //      style: TextStyle(color: Colors.blue),
-    //    ),
-    //  );
-    //  chordIndex++;
-    //}
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Use a Stack to overlay chords over lyrics
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Text(currentLyrics.toString()), // Display lyrics
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: chordWidgets,
-            ),
-          ],
-        ),
-      ],
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(fontSize: 18.0, color: Colors.black),
+        children: textSpans,
+      ),
     );
-  }
-
-  String _nashvilleToChord(dynamic nashvilleNumber) {
-    if (nashvilleNumber is int) {
-      // Convert Nashville number to chord notation (simple example)
-      const chords = ["I", "II", "III", "IV", "V", "VI", "VII"];
-      int index = nashvilleNumber % chords.length;
-      return chords[index >= 0 ? index : chords.length + index];
-    } else {
-      return '';
-    }
   }
 }
